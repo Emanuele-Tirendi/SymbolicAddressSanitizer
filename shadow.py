@@ -484,9 +484,9 @@ class ShadowMemory(angr.SimStatePlugin):
             if leftaddr == None:
                 # if there is no buffer whose base address <= addr, then addr does access poisoned area
                 return addr, None
-            if solver.satisfiable(extra_constraints=[addr > leftaddr+leftsize]):
+            if solver.satisfiable(extra_constraints=[addr >= leftaddr+leftsize]):
                 # if there is a model where addr is outside of the buffer defined by leftaddr, we found a vulnerabiliry
-                concsize = solver.eval(leftsize, extra_constraints=[addr > leftaddr+leftsize])
+                concsize = solver.eval(leftsize, extra_constraints=[addr >= leftaddr+leftsize])
                 maxleftsize = solver.max(leftsize)
                 if addr > leftaddr+maxleftsize:
                     # if addr is outside of buffer for any model, don't specify required size for making it outside
@@ -515,7 +515,7 @@ class ShadowMemory(angr.SimStatePlugin):
                 return minaddr, None
                 
             # iterate over each buffer defined by leftaddr and check if there is amodel where addr is outside of it because addr is bigger
-            while solver.satisfiable(extra_constraints=[addr > leftaddr+leftsize, addr_in_heap, addr_condition]):
+            while solver.satisfiable(extra_constraints=[addr >= leftaddr+leftsize, addr_in_heap, addr_condition]):
                 if rightaddr != None:
                     # if there is a buffer whose base address is bigger than leftaddr
                     # store in addr_between_buffers the condition needed for the model in which
@@ -543,7 +543,6 @@ class ShadowMemory(angr.SimStatePlugin):
 
         addr_condition = addr[1]
         addr = addr[0]
-
         if isinstance(addr, int) or not solver.symbolic(addr):
             if not isinstance(addr, int):
                 addr = solver.eval(addr)
@@ -555,7 +554,7 @@ class ShadowMemory(angr.SimStatePlugin):
                 base_addr = single_addrs[addr]
                 size, max_size = ptrs_and_sizes[base_addr]
                 # store in out_of_bounds the condition for the models where addr is poisoned
-                out_of_bounds = claripy.And(addr>base_addr+size)
+                out_of_bounds = claripy.And(addr>=base_addr+size)
                 if solver.satisfiable(extra_constraints=[out_of_bounds]):
                     # if there is a model where addr is poisoned, extract the concrete size needed for this
                     conc_size = solver.eval(size, extra_constraints=[out_of_bounds])
@@ -586,7 +585,7 @@ class ShadowMemory(angr.SimStatePlugin):
                     size, max_size = ptrs_and_sizes[base_addr]
                     # store in out_of_bounds the condition for the models where addr is poisoned
                     # use for the maximum of the size the solver since max_size might not be the current max size anymore
-                    out_of_bounds = claripy.And(current>base_addr+size, addr==current)
+                    out_of_bounds = claripy.And(current>=base_addr+size, addr==current)
                     if solver.satisfiable(extra_constraints=[out_of_bounds, addr_in_heap, addr_condition]):
                         # if there is indeed a model where addr is poisoned
                         conc_size = solver.eval(size, extra_constraints=[out_of_bounds, addr_in_heap, addr_condition])
