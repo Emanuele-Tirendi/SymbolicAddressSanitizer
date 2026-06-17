@@ -1,3 +1,7 @@
+# ATTENTION
+The code in this repository is currently being refactored to improve structure, maintainability, and overall code quality.
+
+# README
 ### Preconditions for running the detector:
 * Install angr: `pip install angr`
 * Install monkeyhex: `pip install monkeyhex`
